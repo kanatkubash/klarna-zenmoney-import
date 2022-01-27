@@ -1,0 +1,96 @@
+query enrichedTransactionList(
+  $personaKrn: ID
+  $email: String
+  $filter: FilterName
+  $market: String
+  $page: PageArgs!
+  $transactionKrns: [ID!]
+  $filterData: FilterData
+) {
+  enrichedTransactionList(
+    personaKrn: $personaKrn
+    email: $email
+    filter: $filter
+    market: $market
+    page: $page
+    transactionKrns: $transactionKrns
+    filterData: $filterData
+  ) {
+    page {
+      transactionKrn
+      createdAt
+      merchantOrderReference
+      amountPaid {
+        ...amount
+      }
+      brand {
+        displayName
+      }
+      status {
+        ...status
+      }
+      lineItems {
+        ...lineItem
+      }
+      individualFees {
+        __typename
+        chargeType
+        amount {
+          ...amount
+        }
+      }
+      interestFee {
+        __typename
+        interestRate
+        amount {
+          ...amount
+        }
+      }
+      totalAmount {
+        ...amount
+      }
+    }
+    paginationToken
+  }
+}
+fragment status on EnrichedTransactionListItemStatus {
+  __typename
+  name
+  params {
+    ...statusParams
+  }
+}
+fragment statusParams on EnrichedTransactionListItemsStatusParams {
+  __typename
+  ... on StatusAutoPayByCardParams {
+    numberOfDays
+    dueDate
+  }
+  ... on StatusDueParams {
+    numberOfDays
+    dueDate
+  }
+  ... on StatusNotYetPayableParams {
+    date
+  }
+  ... on StatusPaymentScheduledParams {
+    date
+  }
+}
+fragment lineItem on EnrichedLineItem {
+  __typename
+  name
+  images {
+    __typename
+    url
+    format
+  }
+  quantity
+  totalAmount {
+    ...amount
+  }
+}
+fragment amount on MonetaryAmount {
+  amount
+  currency
+}

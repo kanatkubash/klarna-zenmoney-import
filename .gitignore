@@ -1,2 +1,10 @@
-node_modules
-.vscode
+.idea/
+.vscode/
+node_modules/
+build/
+tmp/
+temp/
+logs/
+.env
+*.sqlite
+*.log
