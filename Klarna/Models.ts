@@ -8,38 +8,77 @@ export enum Currencies {
 
 export interface Amount {
   amount: number;
-  currency: Currencies;
+  currency: string;
 }
 
 export interface TransactionStatusParams {
   numberOfDays: number;
-  dueDate: Date;
-  date: Date;
+  dueDate: string;
+  date: string;
 }
 
 export interface TransactionStatus {
-  __typename: string;
   name: string;
   params: TransactionStatusParams;
 }
-export interface TransactionItem {
-  __typename: string;
+export interface TransactionItemResponse {
   name: string;
   quantity: number;
   totalAmount: Amount;
+  images: { format: string; url: string }[];
+}
+export interface TransactionItem
+  extends Omit<TransactionItemResponse, "images"> {
+  image: string;
 }
 
-export interface Transaction {
+export interface TransactionResponseItem {
+  uniqueId: string;
   transactionKrn: string;
-  createdAt: Date;
+  createdAt: string;
+  rootCreatedAt: string | null;
   merchantOrderReference: string;
   amountPaid: Amount;
   brand: {
     displayName: string;
   };
   status: TransactionStatus;
-  lineItems: TransactionItem[];
+  lineItems: TransactionItemResponse[];
+  shipping: Amount;
   individualFees: any[];
   interestFee: any[];
   totalAmount: Amount;
+}
+
+export interface TransactionResponse {
+  data: {
+    enrichedTransactionList: {
+      page: TransactionResponseItem[];
+      paginationToken: number;
+    };
+  };
+}
+
+export interface ExchangeInformation {
+  amountInOriginalCurrency: Amount;
+  type: "exchangeAmount";
+}
+export interface PaymentInformation {
+  bucketId: string;
+  name: string;
+  type: "paymentMethod";
+}
+
+export interface TransactionDetailsResponse {
+  traits: (ExchangeInformation | object)[];
+}
+
+export interface KlarnaCategoryResponse {
+  data: {
+    transaction: {
+      id: string;
+      categoryKey: string;
+      subCategoryKey: string;
+    };
+  };
 }

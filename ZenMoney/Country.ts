@@ -1,16 +1,17 @@
-import { Column, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 import BaseModel from "../utils/BaseModel";
 
+@Entity()
 export default class Country extends BaseModel<Country> {
   @PrimaryColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  currency: number;
+  currency!: number;
 
-  @Column()
+  @Column({ nullable: true })
   domain?: string;
 
   @Column()
-  title: string;
+  title!: string;
 }

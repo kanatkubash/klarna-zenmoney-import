@@ -1,3 +1,7 @@
+export type Replace<T, K extends keyof T, N> = {
+  [key in keyof K]: N;
+} & Omit<T, K>;
+
 export type ExtractPropertyNamesOfType<T, K> = {
   [S in keyof T]: T[S] extends K ? S : never;
 }[keyof T];
@@ -6,11 +10,18 @@ function numberNotADate(value: any): value is number {
   return typeof value === "number";
 }
 
-export default abstract class BaseModel<T> {
-  protected static dateTimeFieldsToBeFixed;
-  protected static dateFieldsToBeFixed;
+export interface OauthVariables {
+  access_token: string;
+  access_expires: string;
+  refresh_token: string;
+  refresh_expires: string;
+}
 
-  constructor(params: Partial<T> = null) {
+export default abstract class BaseModel<T> {
+  protected static dateTimeFieldsToBeFixed: any;
+  protected static dateFieldsToBeFixed: any;
+
+  constructor(params: Partial<T>) {
     if (params) {
       var copy = { ...params };
       BaseModel.fixDateTimes(
@@ -32,6 +43,7 @@ export default abstract class BaseModel<T> {
     keys?.forEach((key) => {
       var value = params[key];
       if (numberNotADate(value)) params[key] = new Date(value * 1000) as any;
+      else if (typeof value === "string") params[key] = new Date(value) as any;
     });
   }
 

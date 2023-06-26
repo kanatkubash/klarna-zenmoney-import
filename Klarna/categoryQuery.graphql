@@ -1,0 +1,8 @@
+query PfTransactionCategory($transactionId: TransactionIdentifierInput!) {
+  transaction(transactionId: $transactionId) {
+    id
+    categoryKey
+    subCategoryKey
+    __typename
+  }
+}

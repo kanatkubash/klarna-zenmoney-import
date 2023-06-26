@@ -4,13 +4,13 @@ import BaseModel, { ExtractPropertyNamesOfType } from "../utils/BaseModel";
 @Entity()
 export default class Category extends BaseModel<Category> {
   @PrimaryColumn()
-  id: string;
+  id!: string;
   @Column({ type: "datetime" })
-  changed: Date;
+  changed!: Date;
   @Column()
-  user: number;
+  user!: number;
   @Column()
-  title: string;
+  title!: string;
   @Column({ nullable: true })
   parent?: string;
   @Column({ nullable: true })
@@ -20,13 +20,13 @@ export default class Category extends BaseModel<Category> {
   @Column({ nullable: true })
   color?: number;
   @Column()
-  showIncome: boolean;
+  showIncome!: boolean;
   @Column()
-  showOutcome: boolean;
+  showOutcome!: boolean;
   @Column()
-  budgetIncome: boolean;
+  budgetIncome!: boolean;
   @Column()
-  budgetOutcome: boolean;
+  budgetOutcome!: boolean;
   @Column({ nullable: true })
   required?: boolean;
 

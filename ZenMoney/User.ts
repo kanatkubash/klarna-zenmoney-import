@@ -4,13 +4,13 @@ import BaseModel, { ExtractPropertyNamesOfType } from "../utils/BaseModel";
 @Entity()
 export default class User extends BaseModel<User> {
   @PrimaryColumn()
-  id: number;
+  id!: number;
   @Column({ type: "datetime" })
-  changed: Date;
+  changed!: Date;
   @Column({ nullable: true })
   login?: string;
   @Column()
-  currency: number;
+  currency!: number;
   @Column({ nullable: true })
   parent?: number;
 

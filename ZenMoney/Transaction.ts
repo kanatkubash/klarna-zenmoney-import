@@ -4,31 +4,31 @@ import BaseModel, { ExtractPropertyNamesOfType } from "../utils/BaseModel";
 @Entity()
 export default class Transaction extends BaseModel<Transaction> {
   @PrimaryColumn()
-  id: string;
+  id!: string;
   @Column({ type: "datetime" })
-  changed: Date;
+  changed!: Date;
   @Column({ nullable: true })
   comment?: string;
   @Column({ type: "datetime" })
-  created: Date;
+  created!: Date;
   @Column({ type: "date" })
-  date: Date;
+  date!: Date;
   @Column()
   deleted: boolean;
   @Column({ nullable: true })
   hold?: boolean; //clarify
   @Column()
-  income: number;
+  income!: number;
   @Column()
-  incomeAccount: string;
+  incomeAccount!: string;
   @Column({ nullable: true })
   incomeBankID?: string;
   @Column()
-  incomeInstrument: number;
-  // latitude: null;
-  // longitude: null;
+  incomeInstrument!: number;
+  latitude = null;
+  longitude = null;
   @Column({ nullable: true })
-  merchant: string;
+  merchant!: string;
   @Column({ nullable: true })
   opIncome?: number;
   @Column({ nullable: true })
@@ -42,13 +42,13 @@ export default class Transaction extends BaseModel<Transaction> {
   @Column({ nullable: true })
   originalPayee?: string;
   @Column()
-  outcome: number;
+  outcome!: number;
   @Column()
-  outcomeAccount: string;
+  outcomeAccount!: string;
   @Column({ nullable: true })
   outcomeBankID?: string;
   @Column()
-  outcomeInstrument: number;
+  outcomeInstrument!: number;
   @Column({ nullable: true })
   qrCode?: string;
   @Column({ nullable: true })
@@ -58,7 +58,7 @@ export default class Transaction extends BaseModel<Transaction> {
   @Column({ nullable: true, type: "simple-array" })
   tag?: string[];
   @Column()
-  user: number;
+  user!: number;
   @Column()
   viewed: boolean;
 
@@ -71,4 +71,10 @@ export default class Transaction extends BaseModel<Transaction> {
     Transaction,
     Date
   >[] = ["date"];
+
+  constructor(params: Partial<Transaction> = {}) {
+    super(params);
+    this.deleted = false;
+    this.viewed = false;
+  }
 }

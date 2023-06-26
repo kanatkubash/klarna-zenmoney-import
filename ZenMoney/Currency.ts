@@ -4,20 +4,20 @@ import BaseModel from "../utils/BaseModel";
 @Entity()
 export default class Currency extends BaseModel<Currency> {
   @PrimaryColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  changed: number;
+  changed!: number;
 
   @Column()
-  rate: number;
+  rate!: number;
 
   @Column()
-  shortTitle: string;
+  shortTitle!: string;
 
   @Column()
-  symbol: string;
+  symbol!: string;
 
   @Column()
-  title: string;
+  title!: string;
 }

@@ -4,20 +4,21 @@ import BaseModel, { ExtractPropertyNamesOfType } from "../utils/BaseModel";
 @Entity()
 export default class Account extends BaseModel<Account> {
   @PrimaryColumn()
-  id: string; // UUID
+  id!: string; // UUID
   @Column({ type: "datetime" })
-  changed: Date;
-  user: number;
-  @Column({ nullable: true })
-  role: number;
-  @Column({ nullable: true })
-  instrument?: number;
-  @Column({ nullable: true })
-  company: number;
+  changed!: Date;
   @Column()
-  type: "cash" | "ccard" | "checking" | "loan" | "deposit" | "emoney" | "debt";
+  user!: number;
+  @Column({ nullable: true })
+  role?: number;
+  @Column({ nullable: true })
+  instrument!: number;
+  @Column({ nullable: true })
+  company?: number;
   @Column()
-  title: string;
+  type!: "cash" | "ccard" | "checking" | "loan" | "deposit" | "emoney" | "debt";
+  @Column()
+  title!: string;
   @Column({ nullable: true, type: "simple-array" })
   syncID?: string[];
   @Column({ nullable: true })
@@ -27,15 +28,15 @@ export default class Account extends BaseModel<Account> {
   @Column({ nullable: true })
   creditLimit?: number;
   @Column()
-  inBalance: boolean;
+  inBalance!: boolean;
   @Column({ nullable: true })
   savings?: boolean;
   @Column()
-  enableCorrection: boolean;
+  enableCorrection!: boolean;
   @Column()
-  enableSMS: boolean;
+  enableSMS!: boolean;
   @Column()
-  archive: boolean;
+  archive!: boolean;
 
   @Column({ nullable: true })
   /**
@@ -54,6 +55,8 @@ export default class Account extends BaseModel<Account> {
   payoffStep?: number;
   @Column({ nullable: true })
   payoffInterval?: "month" | "year";
+  @Column({ default: false })
+  private!: boolean;
 
   protected static dateTimeFieldsToBeFixed: ExtractPropertyNamesOfType<
     Account,
@@ -61,6 +64,6 @@ export default class Account extends BaseModel<Account> {
   >[] = ["changed"];
   protected static dateFieldsToBeFixed: ExtractPropertyNamesOfType<
     Account,
-    Date
+    Date | undefined
   >[] = ["startDate"];
 }

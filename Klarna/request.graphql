@@ -19,6 +19,7 @@ query enrichedTransactionList(
     page {
       transactionKrn
       createdAt
+      rootCreatedAt
       merchantOrderReference
       amountPaid {
         ...amount
@@ -33,14 +34,12 @@ query enrichedTransactionList(
         ...lineItem
       }
       individualFees {
-        __typename
         chargeType
         amount {
           ...amount
         }
       }
       interestFee {
-        __typename
         interestRate
         amount {
           ...amount
@@ -54,14 +53,12 @@ query enrichedTransactionList(
   }
 }
 fragment status on EnrichedTransactionListItemStatus {
-  __typename
   name
   params {
     ...statusParams
   }
 }
 fragment statusParams on EnrichedTransactionListItemsStatusParams {
-  __typename
   ... on StatusAutoPayByCardParams {
     numberOfDays
     dueDate
@@ -78,10 +75,8 @@ fragment statusParams on EnrichedTransactionListItemsStatusParams {
   }
 }
 fragment lineItem on EnrichedLineItem {
-  __typename
   name
   images {
-    __typename
     url
     format
   }

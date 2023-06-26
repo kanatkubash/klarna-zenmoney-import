@@ -2,20 +2,24 @@ import { ZenmoneyRequest, ZenmoneyResponse } from "./ZenMoneyResponse";
 import fetch, { RequestInfo, RequestInit } from "node-fetch";
 import { writeFile } from "fs/promises";
 import { URL, URLSearchParams } from "url";
-import { Repository } from "typeorm";
+import { EntityTarget, Repository, ObjectLiteral, MoreThan } from "typeorm";
 import KeyValue from "./KeyValue";
-import { ServerResponse } from "http";
-var HttpsProxyAgent = require("http-proxy-agent");
+import Transaction from "./Transaction";
+import Account from "./Account";
+import BaseModel, { OauthVariables } from "../utils/BaseModel";
 
-export interface OauthVariables {
-  access_token: string;
+export interface IRepositoryProvider {
+  getRepository<Entity extends ObjectLiteral>(
+    target: EntityTarget<Entity>
+  ): Repository<Entity>;
 }
 
 export class Zenmoney {
   static AUTH_URL = "https://api.zenmoney.ru/oauth2/authorize/";
   static TOKEN_URL = "https://api.zenmoney.ru/oauth2/token";
   static DIFF_URL = "https://api.zenmoney.ru/v8/diff/";
-  static KEY_VALUE_TYPE = "zenmoney";
+  static SUGGEST_URL = "https://api.zenmoney.ru/v8/suggest/";
+  static KEY_VALUE_TYPE = Zenmoney.name;
 
   private params: {
     consumerKey: string;
@@ -26,7 +30,7 @@ export class Zenmoney {
     debug?: boolean;
   };
   private repository: Repository<KeyValue>;
-  private oauthVariables: OauthVariables;
+  private oauthVariables!: OauthVariables;
 
   constructor(
     params: {
@@ -43,7 +47,7 @@ export class Zenmoney {
     this.repository = repository;
   }
 
-  private async sendRequest(url: RequestInfo, params: RequestInit = null) {
+  private async sendRequest(url: RequestInfo, params?: RequestInit) {
     var response = await fetch(url, params);
     if (this.params.debug) {
       var urlPath = (
@@ -75,7 +79,7 @@ export class Zenmoney {
     }).toString();
 
     var response = await this.sendRequest(url);
-    var [cookie] = response.headers.get("set-cookie").split(";");
+    var [cookie] = response.headers.get("set-cookie")!.split(";");
 
     var params = new URLSearchParams({
       username: this.params.username,
@@ -93,7 +97,7 @@ export class Zenmoney {
       redirect: "manual",
     });
     var headers = response.headers;
-    console.log(await response.text());
+    // console.log(await response.text());
     var authorizeCode = new URL(headers.get("Location")!).searchParams.get(
       "code"
     )!;
@@ -115,19 +119,55 @@ export class Zenmoney {
     return this.oauthVariables;
   }
 
-  async processDiffs(serverTimestamp?: number) {
+  async processDiffs(
+    repositoryProvider: IRepositoryProvider,
+    downloadOnly: boolean,
+    serverTimestamp?: number
+  ) {
+    // return require("../logs/v8.diff..json") as ZenmoneyResponse;
     serverTimestamp = await this.noramlizeTimestamp(serverTimestamp);
     await this.getToken();
 
-    var zenmoneyResponse = await this.makeDiffRequest(serverTimestamp);
+    var newTransactions = downloadOnly
+      ? void 0
+      : await repositoryProvider.getRepository(Transaction).findBy({
+          changed: MoreThan(new Date(serverTimestamp * 1000)),
+        });
+    var newAccounts = downloadOnly
+      ? void 0
+      : await repositoryProvider
+          .getRepository(Account)
+          .findBy({ changed: MoreThan(new Date(serverTimestamp * 1000)) });
+
+    var zenmoneyResponse = await this.makeDiffRequest(
+      serverTimestamp,
+      newTransactions,
+      newAccounts
+    );
     await this.updateServerTimestamp(zenmoneyResponse.serverTimestamp);
 
     return zenmoneyResponse;
   }
+
+  async getSuggestion(transaction: Partial<Transaction>[]) {
+    await this.getToken();
+
+    var response = await this.sendRequest(Zenmoney.SUGGEST_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.oauthVariables.access_token}`,
+      },
+      body: JSON.stringify(transaction),
+    });
+
+    return response.json() as Promise<Partial<Transaction>[]>;
+  }
+
   async noramlizeTimestamp(serverTimestamp?: number): Promise<number> {
     return serverTimestamp == void 0
       ? await this.repository
-          .findOne({
+          .findOneBy({
             type: Zenmoney.KEY_VALUE_TYPE,
             name: "serverTimestamp",
           })
@@ -146,7 +186,11 @@ export class Zenmoney {
     );
   }
 
-  async makeDiffRequest(serverTimestamp) {
+  async makeDiffRequest(
+    serverTimestamp: number,
+    transactions?: Transaction[],
+    accounts?: Account[]
+  ) {
     var response = await this.sendRequest(Zenmoney.DIFF_URL, {
       method: "POST",
       headers: {
@@ -156,10 +200,36 @@ export class Zenmoney {
       body: JSON.stringify(
         new ZenmoneyRequest({
           serverTimestamp,
+          //@ts-expect-error
+          transaction: transactions?.map((tr) => ({
+            ...tr,
+            created: Math.floor(tr.created.getTime() / 1000),
+            changed: Math.floor(tr.changed.getTime() / 1000),
+          })),
+          //@ts-expect-error
+          account: accounts?.map((ac) => ({
+            ...ac,
+            changed: ac.changed.getTime() / 1000,
+          })),
+          //   forceFetch: ["instrument"],
           currentClientTimestamp: Math.floor(new Date().getTime() / 1000),
         })
       ),
     });
+
+    console.log(
+      JSON.stringify(
+        new ZenmoneyRequest({
+          serverTimestamp,
+          transaction: transactions,
+          account: accounts,
+          //   forceFetch: ["company", "country"],
+          currentClientTimestamp: Math.floor(new Date().getTime() / 1000),
+        })
+      )
+    );
+    if (response.status != 200)
+      throw new Error(JSON.stringify(await response.json()));
 
     var zenmoneyResponse: ZenmoneyResponse = await response.json();
     return zenmoneyResponse;
@@ -169,11 +239,9 @@ export class Zenmoney {
     var allKeyValues = await this.repository.find({
       where: { type: Zenmoney.KEY_VALUE_TYPE },
     });
-    if (allKeyValues.length == 0) return void 0;
-
     return allKeyValues.reduce(
       (acc, { name, value }) => ((acc[name] = value), acc),
-      {}
+      {} as any
     ) as OauthVariables;
   }
 
@@ -183,7 +251,7 @@ export class Zenmoney {
         new KeyValue({
           type: Zenmoney.KEY_VALUE_TYPE,
           name: key,
-          value: this.oauthVariables[key],
+          value: this.oauthVariables[key as keyof OauthVariables],
         })
     );
 
